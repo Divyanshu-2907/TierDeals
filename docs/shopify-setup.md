@@ -11,8 +11,9 @@ something not described here, trust the CLI.
 ## 1. Prerequisites
 
 - A [Shopify Partner account](https://partners.shopify.com/signup) (free).
-- A **development store** in that organization. Create one from the Partner
-  Dashboard → Stores → Add store → Development store.
+- A **development store** in that organization. Apps and dev stores now live
+  in the [Dev Dashboard](https://dev.shopify.com/dashboard/), which replaced
+  the Partner Dashboard for app development: Stores → **Create store**.
 - The Shopify CLI. It ships as an npm package; no global install needed if you
   prefer `npx`:
 
@@ -26,8 +27,10 @@ something not described here, trust the CLI.
   ```bash
   # Install Rust from https://rustup.rs, then:
   rustup target add wasm32-unknown-unknown
-  cargo install cargo-wasi    # only if the CLI asks for it
   ```
+
+  On Windows, Rust also needs the MSVC linker from the Visual Studio Build
+  Tools ("Desktop development with C++" workload).
 
 - **Docker Desktop**, running, for the local Postgres.
 
@@ -117,6 +120,37 @@ shopify app dev
 
 The CLI opens a tunnel, rewrites the app URLs, and prints a preview link.
 Open it, pick your development store, and install the app.
+
+## 8. Verify the install
+
+Shopify installs the app itself from the scopes in `shopify.app.toml`, so our
+own OAuth route has not run yet and no session is stored. Run it once, in a
+normal browser tab, using the tunnel URL printed by `shopify app dev`:
+
+```text
+https://<tunnel>/api/auth?shop=<your-store>.myshopify.com
+```
+
+Approve if asked. Then confirm the offline session was stored:
+
+```bash
+docker exec tierdeals-postgres psql -U tierdeals -d tierdeals -c "select id, shop, scope from shopify_sessions"
+```
+
+Finally call `/api/me` with a session token minted from the app secret in
+`.env` (PowerShell shown):
+
+```powershell
+$token = npx tsx web/backend/scripts/session-token.ts <your-store>.myshopify.com
+Invoke-RestMethod "https://<tunnel>/api/me" -Headers @{ Authorization = "Bearer $token" }
+```
+
+It should return your shop domain and scopes. A 403 means no valid session
+for that shop (run the `/api/auth` step again); a 401 means the token was
+rejected, usually because `.env` has a different API key or secret.
+
+Until Phase 3 adds the admin UI, opening the app inside the Shopify admin
+shows a JSON 404. That is expected.
 
 ---
 
