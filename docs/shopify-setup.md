@@ -168,7 +168,7 @@ shows a JSON 404. That is expected.
 ## Troubleshooting
 
 **`shopify app config link` says the directory is not an app.**
-Run it from the repo root, where `package.json` and `web/shopify.web.toml`
+Run it from the repo root, where `package.json` and `web/backend/shopify.web.toml`
 live.
 
 **The app loads blank in the admin.**
