@@ -2,12 +2,20 @@
 // before ./config/env.js (pulled in transitively below) validates them.
 import './config/load-env.js';
 
+import { fileURLToPath } from 'node:url';
+
 import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { logger } from './lib/logger.js';
 import { disconnectPrisma } from './lib/prisma.js';
 
-const app = createApp();
+// In production this process also serves the built admin UI. The path is
+// relative to this file, which runs from web/backend/dist.
+const app = createApp(
+  env.isProduction
+    ? { frontendDir: fileURLToPath(new URL('../../frontend/dist', import.meta.url)) }
+    : {},
+);
 
 const server = app.listen(env.PORT, () => {
   logger.info(

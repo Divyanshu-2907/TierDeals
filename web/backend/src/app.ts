@@ -7,10 +7,16 @@ import { getSession, shopify } from './lib/shopify.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { notFound } from './middleware/not-found.js';
 import { requestContext } from './middleware/request-context.js';
+import { createCatalogRouter } from './routes/catalog.js';
+import { createFrontendRouter } from './routes/frontend.js';
 import { healthRouter } from './routes/health.js';
 import { createRulesRouter } from './routes/rules.js';
 import { createRuleService } from './services/rule-service.js';
-import { adminGraphqlFor } from './shopify/admin-graphql.js';
+import {
+  adminGraphqlFor as defaultAdminGraphqlFor,
+  type AdminGraphql,
+} from './shopify/admin-graphql.js';
+import { createShopifyCatalog } from './shopify/catalog.js';
 import { createShopifyDiscountGateway, type DiscountGateway } from './shopify/discount-gateway.js';
 
 /** Seams for tests; production uses the defaults. */
@@ -18,8 +24,12 @@ export interface AppDependencies {
   prisma?: PrismaClient;
   /** Authenticates /api requests and puts the session in res.locals.shopify. */
   authenticate?: RequestHandler;
+  /** The Admin GraphQL client for an authenticated session. */
+  adminGraphqlFor?: (session: Session) => AdminGraphql;
   /** The Shopify discount gateway for an authenticated session. */
   discountGatewayFor?: (session: Session) => DiscountGateway;
+  /** The built admin UI to serve, in production. */
+  frontendDir?: string;
 }
 
 /**
@@ -33,11 +43,13 @@ export interface AppDependencies {
  *   2. health checks, which must answer even when Shopify is unreachable;
  *   3. the JSON body parser;
  *   4. the API, behind session validation;
- *   5. 404 then the error handler, which are always last.
+ *   5. the built admin UI, in production;
+ *   6. 404 then the error handler, which are always last.
  */
 export function createApp(deps: AppDependencies = {}): Express {
   const prisma = deps.prisma ?? defaultPrisma;
   const authenticate = deps.authenticate ?? shopify.validateAuthenticatedSession();
+  const adminGraphqlFor = deps.adminGraphqlFor ?? defaultAdminGraphqlFor;
   const discountGatewayFor =
     deps.discountGatewayFor ??
     ((session: Session) => createShopifyDiscountGateway(adminGraphqlFor(session)));
@@ -82,9 +94,15 @@ export function createApp(deps: AppDependencies = {}): Express {
     }),
   );
 
+  api.use(
+    createCatalogRouter((_req, res) => createShopifyCatalog(adminGraphqlFor(getSession(res)))),
+  );
+
   app.use('/api', authenticate, api);
 
-  // The built admin UI is served here in production (see Phase 3 frontend).
+  if (deps.frontendDir !== undefined) {
+    app.use(createFrontendRouter(deps.frontendDir));
+  }
 
   app.use(notFound);
   app.use(errorHandler);
