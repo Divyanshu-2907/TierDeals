@@ -35,6 +35,3 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
-
-# Machine-local tool settings
-.claude/
