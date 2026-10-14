@@ -1,0 +1,14 @@
+{
+  /* Emits dist/ for production consumers. In development the backend and the
+     admin UI resolve the package's `development` export straight to src/, so
+     this build only has to run before a production build. */
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "src",
+    "outDir": "dist",
+    "declaration": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+}

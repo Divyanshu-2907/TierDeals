@@ -9,6 +9,7 @@
     "node": ">=20.10"
   },
   "workspaces": [
+    "web/shared",
     "web/backend",
     "extensions/tierdeals-discount"
   ],
