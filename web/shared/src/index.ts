@@ -1,3 +1,4 @@
+export * from './debugger.js';
 export * from './evaluator.js';
 export * from './rule-config.js';
 export * from './rule-dto.js';

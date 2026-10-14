@@ -111,12 +111,12 @@ async function createRule(input: RuleInput = validInput): Promise<RuleDto> {
 beforeEach(() => {
   shopify = fakeShopify();
   // A shop per test keeps tests independent without truncating tables.
-  shop = `test-${randomUUID()}.myshopify.com`;
+  shop = `test-rules-${randomUUID()}.myshopify.com`;
   app = createApp({ authenticate: fakeAuth, discountGatewayFor: () => shopify.gateway });
 });
 
 afterAll(async () => {
-  await prisma.rule.deleteMany({ where: { shop: { startsWith: 'test-' } } });
+  await prisma.rule.deleteMany({ where: { shop: { startsWith: 'test-rules-' } } });
   await prisma.$disconnect();
 });
 
@@ -227,7 +227,7 @@ describe('GET /api/rules', () => {
     const second = await createRule({ ...validInput, title: 'Second' });
 
     const otherShop = shop;
-    shop = `test-${randomUUID()}.myshopify.com`;
+    shop = `test-rules-${randomUUID()}.myshopify.com`;
     await createRule({ ...validInput, title: 'Another shop’s rule' });
     shop = otherShop;
 
@@ -258,7 +258,7 @@ describe('GET /api/rules', () => {
 describe('another shop’s rule', () => {
   it('cannot be read, changed or deleted', async () => {
     const rule = await createRule();
-    shop = `test-${randomUUID()}.myshopify.com`;
+    shop = `test-rules-${randomUUID()}.myshopify.com`;
 
     await api.get(`/api/rules/${rule.id}`).expect(404);
     await api.put(`/api/rules/${rule.id}`, validInput).expect(404);

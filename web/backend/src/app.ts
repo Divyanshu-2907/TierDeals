@@ -8,15 +8,17 @@ import { errorHandler } from './middleware/error-handler.js';
 import { notFound } from './middleware/not-found.js';
 import { requestContext } from './middleware/request-context.js';
 import { createCatalogRouter } from './routes/catalog.js';
+import { createDebuggerRouter } from './routes/debugger.js';
 import { createFrontendRouter } from './routes/frontend.js';
 import { healthRouter } from './routes/health.js';
 import { createRulesRouter } from './routes/rules.js';
+import { createDebuggerService } from './services/debugger-service.js';
 import { createRuleService } from './services/rule-service.js';
 import {
   adminGraphqlFor as defaultAdminGraphqlFor,
   type AdminGraphql,
 } from './shopify/admin-graphql.js';
-import { createShopifyCatalog } from './shopify/catalog.js';
+import { createShopifyCatalog, type Catalog } from './shopify/catalog.js';
 import { createShopifyDiscountGateway, type DiscountGateway } from './shopify/discount-gateway.js';
 
 /** Seams for tests; production uses the defaults. */
@@ -26,6 +28,8 @@ export interface AppDependencies {
   authenticate?: RequestHandler;
   /** The Admin GraphQL client for an authenticated session. */
   adminGraphqlFor?: (session: Session) => AdminGraphql;
+  /** Read-only shop data (products, collections, currency) for a session. */
+  catalogFor?: (session: Session) => Catalog;
   /** The Shopify discount gateway for an authenticated session. */
   discountGatewayFor?: (session: Session) => DiscountGateway;
   /** The built admin UI to serve, in production. */
@@ -50,6 +54,8 @@ export function createApp(deps: AppDependencies = {}): Express {
   const prisma = deps.prisma ?? defaultPrisma;
   const authenticate = deps.authenticate ?? shopify.validateAuthenticatedSession();
   const adminGraphqlFor = deps.adminGraphqlFor ?? defaultAdminGraphqlFor;
+  const catalogFor =
+    deps.catalogFor ?? ((session: Session) => createShopifyCatalog(adminGraphqlFor(session)));
   const discountGatewayFor =
     deps.discountGatewayFor ??
     ((session: Session) => createShopifyDiscountGateway(adminGraphqlFor(session)));
@@ -94,8 +100,13 @@ export function createApp(deps: AppDependencies = {}): Express {
     }),
   );
 
+  api.use(createCatalogRouter((_req, res) => catalogFor(getSession(res))));
+
   api.use(
-    createCatalogRouter((_req, res) => createShopifyCatalog(adminGraphqlFor(getSession(res)))),
+    createDebuggerRouter((_req, res) => {
+      const session = getSession(res);
+      return createDebuggerService({ prisma, shop: session.shop, catalog: catalogFor(session) });
+    }),
   );
 
   app.use('/api', authenticate, api);
