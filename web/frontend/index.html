@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Filled in by Vite in development and by the backend in production. -->
+    <meta name="shopify-api-key" content="%SHOPIFY_API_KEY%" />
+    <!-- App Bridge must load first, synchronously, before any app code. -->
+    <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
+    <script src="https://cdn.shopify.com/shopifycloud/polaris-1.js"></script>
+    <title>TierDeals</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

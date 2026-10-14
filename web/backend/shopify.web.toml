@@ -3,14 +3,15 @@
 # injects SHOPIFY_API_KEY, SHOPIFY_API_SECRET, SCOPES, PORT and the public URL
 # (as APP_URL and HOST, not SHOPIFY_APP_URL; src/config/env.ts maps it).
 #
-# This is a single-process app, so it takes both roles. The CLI's dev proxy
-# only routes requests to a process with the `frontend` role; with `backend`
-# alone, every request through the proxy fails with "Invalid path".
-roles = ["frontend", "backend"]
+# The CLI proxy routes requests to the frontend (web/frontend), whose Vite dev
+# server forwards /api here. In production this server also serves the built
+# admin UI, so there is one process.
+roles = ["backend"]
 webhooks_path = "/api/webhooks"
 
 # Fixed instead of random so the server can be reached directly on
-# http://localhost:3000 (for /health) while `shopify app dev` is running.
+# http://localhost:3000 (for /health) while `shopify app dev` is running, and
+# so the frontend's proxy target is predictable.
 port = 3000
 
 [commands]

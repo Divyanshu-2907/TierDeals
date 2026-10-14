@@ -1,0 +1,7 @@
+# The admin UI's dev server. The CLI runs the command below from this
+# directory (web/frontend) and routes every request through its proxy to it;
+# Vite forwards /api to the backend on BACKEND_PORT (see vite.config.ts).
+roles = ["frontend"]
+
+[commands]
+dev = "npm run dev"

@@ -11,6 +11,7 @@
   "workspaces": [
     "web/shared",
     "web/backend",
+    "web/frontend",
     "extensions/tierdeals-discount"
   ],
   "scripts": {
