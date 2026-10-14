@@ -36,5 +36,5 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 
-# Machine-local tool settings (the shared .claude/settings.json is committed)
-.claude/settings.local.json
+# Machine-local tool settings
+.claude/
