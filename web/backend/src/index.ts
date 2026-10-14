@@ -1,6 +1,6 @@
-// Must be the first import: it populates process.env from .env before
-// ./config/env.js (pulled in transitively below) validates it.
-import 'dotenv/config';
+// Must be the first import: it populates process.env from the .env files
+// before ./config/env.js (pulled in transitively below) validates them.
+import './config/load-env.js';
 
 import { createApp } from './app.js';
 import { env } from './config/env.js';

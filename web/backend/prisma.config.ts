@@ -1,6 +1,15 @@
-import 'dotenv/config';
+import path from 'node:path';
 
+import { config as loadDotenv } from 'dotenv';
 import { defineConfig } from 'prisma/config';
+
+// Same reasoning as src/config/load-env.ts: DATABASE_URL lives in the
+// repository-root .env, two levels above this workspace package. The Prisma
+// CLI runs with its cwd here, so the root file has to be named explicitly.
+loadDotenv({
+  path: [path.resolve('.env'), path.resolve('..', '..', '.env')],
+  quiet: true,
+});
 
 /**
  * Prisma CLI configuration.
@@ -11,7 +20,8 @@ import { defineConfig } from 'prisma/config';
  * driver adapter in src/lib/prisma.ts, which reads the same validated
  * DATABASE_URL.
  *
- * `.env` is not loaded automatically for config files, hence the import above.
+ * `.env` is not loaded automatically for config files, hence the explicit
+ * load above.
  */
 
 /**
