@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Rust / WASM
+target/
+**/*.wasm
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Shopify CLI
+.shopify/
+shopify.app.*.toml
+!shopify.app.toml
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test / coverage
+coverage/
+
+# Editors & OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

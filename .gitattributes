@@ -1,0 +1,7 @@
+# Normalise to LF in the repository; the Rust toolchain, Docker and CI all
+# expect it, and the project is developed on both Windows and Linux.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.wasm binary
