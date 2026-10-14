@@ -20,14 +20,6 @@ export function useRule(id: string | undefined) {
   });
 }
 
-export function useShop() {
-  return useQuery({
-    queryKey: ['shop'],
-    queryFn: () => apiFetch<{ shop: string; currencyCode: string }>('/api/shop'),
-    staleTime: Infinity,
-  });
-}
-
 /** Titles for collection GIDs; IDs missing from the result were deleted. */
 export function useCollections(ids: readonly string[]) {
   return useQuery({

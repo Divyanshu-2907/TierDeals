@@ -3,14 +3,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 
 import { ApiError } from '../api/client';
-import {
-  useCollections,
-  useCreateRule,
-  useRetrySync,
-  useRule,
-  useShop,
-  useUpdateRule,
-} from '../api/hooks';
+import { useCollections, useCreateRule, useRetrySync, useRule, useUpdateRule } from '../api/hooks';
 import { CollectionsField } from '../components/CollectionsField';
 import { TierEditor } from '../components/TierEditor';
 import {
@@ -25,6 +18,10 @@ import { fieldChecked, fieldValue } from '../ui/events';
 import { fieldError } from '../ui/field-error';
 import { showError } from '../ui/toast';
 import { NotFoundPage } from './NotFoundPage';
+
+function isRuleType(value: string): value is RuleType {
+  return (RULE_TYPES as readonly string[]).includes(value);
+}
 
 const TYPE_DETAILS: Record<RuleType, string> = {
   COLLECTION_QUANTITY_TIERS:
@@ -69,7 +66,6 @@ export function RuleFormPage() {
 
 function RuleForm({ rule }: { rule?: RuleDto }) {
   const navigate = useNavigate();
-  const shop = useShop();
   const create = useCreateRule();
   const update = useUpdateRule(rule?.id ?? '');
   const retrySync = useRetrySync();
@@ -93,7 +89,6 @@ function RuleForm({ rule }: { rule?: RuleDto }) {
       (lookup.isPending ? 'Loading…' : null),
   }));
 
-  const currencyCode = shop.data?.currencyCode;
   const saving = create.isPending || update.isPending;
 
   function set<K extends keyof RuleFormValues>(key: K, value: RuleFormValues[K]) {
@@ -202,7 +197,12 @@ function RuleForm({ rule }: { rule?: RuleDto }) {
                 : TYPE_DETAILS[values.type]
             }
             {...fieldError(errors, 'config.type')}
-            onChange={(e) => setValues((v) => withType(v, fieldValue(e) as RuleType))}
+            onChange={(e) => {
+              // Read the value now: the event is finished by the time a state
+              // updater runs, and its currentTarget is null by then.
+              const type = fieldValue(e);
+              if (isRuleType(type)) setValues((v) => withType(v, type));
+            }}
           >
             {RULE_TYPES.map((type) => (
               <s-option key={type} value={type}>
@@ -228,7 +228,6 @@ function RuleForm({ rule }: { rule?: RuleDto }) {
               tiers={values.tiers}
               onChange={(tiers) => set('tiers', tiers)}
               errors={errors}
-              currencyCode={currencyCode}
             />
           </s-section>
         </>
@@ -241,21 +240,17 @@ function RuleForm({ rule }: { rule?: RuleDto }) {
             tiers={values.tiers}
             onChange={(tiers) => set('tiers', tiers)}
             errors={errors}
-            currencyCode={currencyCode}
           />
         </s-section>
       )}
 
       {values.type === 'FREE_SHIPPING_THRESHOLD' && (
         <s-section heading="Threshold">
-          <s-number-field
+          <s-money-field
             label="Minimum subtotal"
             details="Orders at or above this subtotal get free shipping."
             value={values.minSubtotal}
             min={0}
-            step={0.01}
-            inputMode="decimal"
-            prefix={currencyCode ?? ''}
             {...fieldError(errors, 'config.minSubtotal')}
             onInput={(e) => set('minSubtotal', fieldValue(e))}
           />

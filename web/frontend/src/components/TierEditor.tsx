@@ -10,14 +10,13 @@ interface TierEditorProps {
   onChange: (tiers: TierRow[]) => void;
   /** Form errors keyed by schema path, e.g. `config.tiers.1.percentage`. */
   errors: Record<string, string>;
-  currencyCode: string | undefined;
 }
 
 /**
  * Rows of "threshold → percentage". Tiers can be entered in any order; the
  * highest one the cart meets applies, and they never stack.
  */
-export function TierEditor({ type, tiers, onChange, errors, currencyCode }: TierEditorProps) {
+export function TierEditor({ type, tiers, onChange, errors }: TierEditorProps) {
   const key = thresholdKey(type);
   const isQuantity = type === 'COLLECTION_QUANTITY_TIERS';
 
@@ -43,14 +42,13 @@ export function TierEditor({ type, tiers, onChange, errors, currencyCode }: Tier
               onInput={(e) => update(index, { threshold: fieldValue(e) })}
             />
           ) : (
-            <s-number-field
+            // A money field shows the shop's currency by default, which is
+            // the currency thresholds are configured in.
+            <s-money-field
               label="Minimum subtotal"
               labelAccessibilityVisibility={index === 0 ? 'visible' : 'exclusive'}
               value={row.threshold}
               min={0}
-              step={0.01}
-              inputMode="decimal"
-              prefix={currencyCode ?? ''}
               {...fieldError(errors, `config.tiers.${index}.${key}`)}
               onInput={(e) => update(index, { threshold: fieldValue(e) })}
             />

@@ -12,7 +12,6 @@ function setup(tiers: TierRow[], errors: Record<string, string> = {}) {
       tiers={tiers}
       onChange={onChange}
       errors={errors}
-      currencyCode="INR"
     />,
   );
   const buttons = [...container.querySelectorAll('s-button')];
