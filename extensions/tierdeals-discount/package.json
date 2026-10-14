@@ -1,0 +1,13 @@
+{
+  "name": "tierdeals-discount",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@shopify/shopify-function-test-helpers": "^1.0.0",
+    "vitest": "^5.0.4"
+  }
+}
