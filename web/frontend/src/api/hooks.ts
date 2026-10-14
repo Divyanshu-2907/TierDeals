@@ -1,4 +1,4 @@
-import type { RuleDto, RuleInput } from '@tierdeals/shared';
+import type { DebugCart, DebugResult, RuleDto, RuleInput } from '@tierdeals/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiFetch } from './client';
@@ -88,5 +88,18 @@ export function useDeleteRule() {
     mutationFn: (id: string) => apiFetch<void>(`/api/rules/${id}`, { method: 'DELETE' }),
     // Refresh even on failure: a refused delete marks the rule out of sync.
     onSettled: () => queryClient.invalidateQueries({ queryKey: RULES_KEY }),
+  });
+}
+
+/** Runs every rule against a sample cart (the Rule Debugger). */
+export function useEvaluateCart() {
+  return useMutation({
+    mutationFn: async (cart: DebugCart) =>
+      (
+        await apiFetch<{ result: DebugResult }>('/api/debugger/evaluate', {
+          method: 'POST',
+          body: { cart },
+        })
+      ).result,
   });
 }
