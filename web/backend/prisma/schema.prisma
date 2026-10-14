@@ -1,0 +1,132 @@
+// TierDeals application schema.
+//
+// Scope note: Shopify OAuth sessions are NOT modelled here. They live in a
+// `shopify_sessions` table that @shopify/shopify-app-session-storage-postgresql
+// creates and migrates itself, in this same database. Keeping the two apart
+// means a Prisma migration can never corrupt the session store.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  runtime      = "nodejs"
+  moduleFormat = "esm"
+}
+
+// Prisma 7 no longer accepts `url` here -- the connection string for Migrate
+// lives in prisma.config.ts, and the runtime client gets it from the driver
+// adapter in src/lib/prisma.ts.
+datasource db {
+  provider = "postgresql"
+}
+
+/// The three kinds of discount rule TierDeals supports. The `config` JSON on
+/// Rule is validated against a different Zod schema per variant -- see
+/// src/domain/rule-config.ts.
+enum RuleType {
+  /// Buy N+ items from collection X, get Y% off those items.
+  COLLECTION_QUANTITY_TIERS
+  /// Spend $A or more, get B% off the order.
+  CART_SUBTOTAL_TIERS
+  /// Subtotal of $A or more ships free.
+  FREE_SHIPPING_THRESHOLD
+}
+
+/// Whether the row in Postgres matches the automatic discount in Shopify.
+///
+/// A save touches two systems that cannot share a transaction (our database
+/// and the Shopify Admin API). When the Shopify half fails we keep the local
+/// row and mark it OUT_OF_SYNC rather than silently diverging, so the admin UI
+/// can surface it and offer a retry.
+enum SyncStatus {
+  /// Local row and Shopify discount agree.
+  SYNCED
+  /// Never pushed to Shopify yet.
+  PENDING
+  /// Last push to Shopify failed; `syncError` holds the reason.
+  OUT_OF_SYNC
+}
+
+model Rule {
+  id    String   @id @default(cuid())
+  shop  String
+  title String
+  type  RuleType
+
+  /// Type-specific settings, validated with Zod on the way in and on the way
+  /// out. This same object is mirrored into the Shopify discount's metafield,
+  /// where the Rust Function reads it at checkout.
+  config Json
+
+  active   Boolean   @default(true)
+  startsAt DateTime  @default(now())
+  endsAt   DateTime?
+
+  // Shopify's `combinesWith` flags, stored flat so they are easy to query.
+  combinesWithProductDiscounts  Boolean @default(false)
+  combinesWithOrderDiscounts    Boolean @default(false)
+  combinesWithShippingDiscounts Boolean @default(false)
+
+  /// GID of the automatic app discount in Shopify, e.g.
+  /// "gid://shopify/DiscountAutomaticNode/123". Null until the first
+  /// successful sync.
+  shopifyDiscountId String?
+  syncStatus        SyncStatus @default(PENDING)
+  /// Human-readable reason the last Shopify sync failed, shown in the UI.
+  syncError         String?
+  lastSyncedAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  applications DiscountApplication[]
+
+  @@unique([shop, shopifyDiscountId])
+  @@index([shop, active])
+  @@index([shop, createdAt])
+}
+
+/// One row per (order, rule) pair where one of our discounts was applied.
+/// Written by the orders/create webhook; read by the analytics page.
+model DiscountApplication {
+  id   String @id @default(cuid())
+  shop String
+
+  /// Null if the rule was deleted after the order was placed -- we keep the
+  /// historical record either way.
+  ruleId String?
+  rule   Rule?   @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+
+  /// Shopify order GID.
+  orderId String
+  /// Customer-facing order number, e.g. "#1001". Handy in bug reports.
+  orderName String?
+
+  /// Discount title as it appeared on the order, captured even when ruleId is
+  /// null so the log stays readable.
+  discountTitle String
+
+  amount       Decimal @db.Decimal(12, 2)
+  currencyCode String
+
+  orderCreatedAt DateTime
+  createdAt      DateTime @default(now())
+
+  /// A retried webhook must not double-count. Shopify can deliver the same
+  /// order more than once, so (order, rule, title) is the natural key.
+  @@unique([orderId, ruleId, discountTitle])
+  @@index([shop, orderCreatedAt])
+}
+
+/// Webhook delivery ledger, used purely for idempotency and debugging.
+/// Shopify retries on any non-2xx, so the same X-Shopify-Webhook-Id can
+/// arrive several times.
+model ProcessedWebhook {
+  id          String   @id @default(cuid())
+  shop        String
+  webhookId   String
+  topic       String
+  processedAt DateTime @default(now())
+
+  @@unique([webhookId, topic])
+  @@index([shop, processedAt])
+}
