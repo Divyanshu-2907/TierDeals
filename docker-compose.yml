@@ -1,0 +1,30 @@
+# Local development database for TierDeals.
+#
+# Holds two separate concerns in one Postgres instance:
+#   1. Shopify OAuth sessions  -> managed by @shopify/shopify-app-session-storage-postgresql
+#                                 (it creates and migrates its own `shopify_sessions` table)
+#   2. Application data        -> managed by Prisma (see web/backend/prisma/schema.prisma)
+#
+# Usage: docker compose up -d
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: tierdeals-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tierdeals
+      POSTGRES_PASSWORD: tierdeals
+      POSTGRES_DB: tierdeals
+    ports:
+      # Host port 5433 avoids clashing with a locally installed Postgres on 5432.
+      - '5433:5432'
+    volumes:
+      - tierdeals-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U tierdeals -d tierdeals']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  tierdeals-pgdata:
