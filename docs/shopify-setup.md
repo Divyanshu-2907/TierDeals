@@ -120,8 +120,18 @@ npm run db:migrate
 shopify app dev
 ```
 
-The CLI opens a tunnel, rewrites the app URLs, and prints a preview link.
-Open it, pick your development store, and install the app.
+The CLI opens a tunnel (or, with `--use-localhost`, a local HTTPS proxy),
+rewrites the app URLs, and prints a preview link. Open it, pick your
+development store, and install the app.
+
+It runs two processes and builds the Function:
+
+- **web-frontend**: the Vite dev server for the admin UI. The CLI proxy sends
+  every request here, and Vite forwards `/api` to the backend.
+- **web-backend**: the Express API on port 3000 (`http://localhost:3000/health`).
+
+Edits to either reload automatically. Stop and restart `shopify app dev` after
+changing any `shopify.*.toml` file.
 
 ## 8. Verify the install
 

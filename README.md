@@ -3,8 +3,8 @@
 Tiered discount rules for Shopify. Merchants define discount logic in an
 embedded admin UI; a Rust Shopify Function applies it at checkout.
 
-> **Status:** in development, built in phases. Phase 1 (project skeleton) is
-> complete. See [Roadmap](#roadmap).
+> **Status:** in development, built in phases. Phases 1 and 2 are complete;
+> Phase 3 (the rules admin) is built and in testing. See [Roadmap](#roadmap).
 
 ## What it does
 
@@ -40,8 +40,9 @@ orders/create webhook  →  Express  →  Postgres (discount application log)
 ```
 .
 ├── web/backend/          Express + TypeScript API, Prisma schema
-├── web/frontend/         React + Vite + Polaris admin          (Phase 3)
-├── extensions/           Rust discount Function                (Phase 2)
+├── web/frontend/         React + Vite admin (Polaris web components, App Bridge)
+├── web/shared/           Zod rule schemas used by both the API and the admin
+├── extensions/           Rust discount Function
 ├── fixtures/             Shared test fixtures, run by cargo AND vitest
 ├── docs/screenshots/     README screenshots
 └── docker-compose.yml    Local Postgres
@@ -49,8 +50,8 @@ orders/create webhook  →  Express  →  Postgres (discount application log)
 
 ## Local setup
 
-Prerequisites: Node 20.10+, Docker, Rust with the `wasm32-unknown-unknown`
-target (Phase 2), and the Shopify CLI.
+Prerequisites: Node 22.22+, Docker, Rust with the `wasm32-unknown-unknown`
+target, and the Shopify CLI.
 
 ```bash
 npm install
@@ -66,9 +67,11 @@ Shopify-side setup (requires a Partner account) is documented in
 
 | Command | What it does |
 | --- | --- |
-| `npm run dev` | Start the backend with hot reload |
+| `shopify app dev` | Run the whole app (admin UI, API, Function) against a dev store |
+| `npm run build` | Production build: shared schemas, API, then admin UI |
 | `npm run lint` | ESLint across all workspaces |
-| `npm test` | Vitest suites |
+| `npm test` | Vitest suites (the API tests need Postgres: `npm run db:up`) |
+| `cargo test` | Function unit tests, run in `extensions/tierdeals-discount` |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run format` | Prettier |
 | `npm run db:up` / `db:down` | Local Postgres lifecycle |
@@ -77,7 +80,7 @@ Shopify-side setup (requires a Partner account) is documented in
 ## Roadmap
 
 - [x] **Phase 1** — repo skeleton, Postgres, Express + Prisma, env validation, tooling
-- [ ] **Phase 2** — Rust discount Function + `cargo test`
+- [x] **Phase 2** — Rust discount Function + `cargo test`
 - [ ] **Phase 3** — Rules admin: CRUD API, Polaris UI, Shopify discount sync
 - [ ] **Phase 4** — Rule Debugger, shared fixtures, cross-language parity tests
 - [ ] **Phase 5** — `orders/create` webhook, application log, analytics
