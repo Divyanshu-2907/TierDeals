@@ -7,9 +7,13 @@
  *
  * It deliberately imports nothing from src/.
  */
+import { TEST_DATABASE_URL } from './test-database.js';
+
 process.env.NODE_ENV = 'test';
 process.env.LOG_LEVEL ??= 'silent';
-process.env.DATABASE_URL ??= 'postgresql://tierdeals:tierdeals@localhost:5433/tierdeals_test';
+// Assigned, not defaulted: a DATABASE_URL exported in the shell must never
+// point the tests at the development database.
+process.env.DATABASE_URL = TEST_DATABASE_URL;
 process.env.SHOPIFY_API_KEY ??= 'test-api-key';
 process.env.SHOPIFY_API_SECRET ??= 'test-api-secret';
 process.env.SHOPIFY_APP_URL ??= 'https://tierdeals.test';

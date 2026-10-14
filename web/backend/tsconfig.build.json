@@ -6,7 +6,10 @@
   "compilerOptions": {
     "noEmit": false,
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    /* Compile against @tierdeals/shared's built dist/, which is also what
+       `node dist/index.js` loads at runtime. */
+    "customConditions": []
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]
