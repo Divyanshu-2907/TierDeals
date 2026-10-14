@@ -1,0 +1,13 @@
+{
+  /* Build-only view of the project: application source, nothing else.
+     Tests and config files are type-checked by tsconfig.json but must not
+     end up in dist/. */
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+}

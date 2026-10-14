@@ -1,0 +1,32 @@
+{
+  "name": "tierdeals",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tiered discount rules for Shopify, powered by a Rust Shopify Function.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20.10"
+  },
+  "workspaces": [
+    "web/backend"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace web/backend",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "lint:fix": "npm run lint:fix --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && docker compose up -d",
+    "db:migrate": "npm run db:migrate --workspace web/backend",
+    "db:studio": "npm run db:studio --workspace web/backend"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2"
+  }
+}

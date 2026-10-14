@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+
+    /* rootDir/outDir live in tsconfig.build.json: this config also covers
+       tests and config files, which sit outside src/ and are never emitted. */
+    "noEmit": true,
+
+    /* Strictness. Unused-symbol checks are deliberately left to ESLint instead
+       of tsc: the Prisma client is generated into src/generated and would trip
+       noUnusedLocals on code we do not own. */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+
+    "sourceMap": true,
+    "declaration": false
+  },
+  /* Everything the editor, ESLint and `npm run typecheck` should see --
+     tests and config files included. The production build narrows this to
+     src/ via tsconfig.build.json. */
+  "include": ["src/**/*.ts", "test/**/*.ts", "*.config.ts", "prisma.config.ts"],
+  "exclude": ["node_modules", "dist"]
+}
