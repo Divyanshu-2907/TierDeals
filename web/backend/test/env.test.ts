@@ -48,6 +48,13 @@ describe('parseEnv', () => {
     expect(env.hostName).toBe('abc-123.trycloudflare.com');
   });
 
+  it('prefers the APP_URL injected by `shopify app dev` over SHOPIFY_APP_URL', () => {
+    const env = parseEnv({ ...validEnv, APP_URL: 'https://localhost:3458' });
+
+    expect(env.SHOPIFY_APP_URL).toBe('https://localhost:3458');
+    expect(env.hostName).toBe('localhost:3458');
+  });
+
   it('flags production', () => {
     expect(parseEnv({ ...validEnv, NODE_ENV: 'production' }).isProduction).toBe(true);
     expect(parseEnv(validEnv).isProduction).toBe(false);

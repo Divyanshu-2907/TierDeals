@@ -30,7 +30,11 @@ const envSchema = z.object({
   /** Client secret of the app. Never log this. */
   SHOPIFY_API_SECRET: z.string().min(1),
 
-  /** Public HTTPS origin of this app; `shopify app dev` sets it to the tunnel URL. */
+  /**
+   * Public HTTPS origin of this app. Under `shopify app dev` this comes from
+   * the CLI's APP_URL instead (see parseEnv), so .env only matters when the
+   * server runs without the CLI.
+   */
   SHOPIFY_APP_URL: z.url(),
 
   /** Comma-separated in the environment, a string array everywhere else. */
@@ -69,7 +73,13 @@ function formatIssues(error: z.ZodError): string {
  * without mutating the real process.
  */
 export function parseEnv(source: NodeJS.ProcessEnv = process.env): Env {
-  const result = envSchema.safeParse(source);
+  // `shopify app dev` injects the tunnel or localhost URL as APP_URL (and
+  // HOST), not SHOPIFY_APP_URL. It must win over the placeholder in .env, or
+  // OAuth builds its callback URL on the wrong host.
+  const result = envSchema.safeParse({
+    ...source,
+    SHOPIFY_APP_URL: source.APP_URL ?? source.SHOPIFY_APP_URL,
+  });
 
   if (!result.success) {
     throw new Error(
