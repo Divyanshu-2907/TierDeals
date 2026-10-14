@@ -32,6 +32,6 @@
   /* Everything the editor, ESLint and `npm run typecheck` should see --
      tests and config files included. The production build narrows this to
      src/ via tsconfig.build.json. */
-  "include": ["src/**/*.ts", "test/**/*.ts", "*.config.ts", "prisma.config.ts"],
+  "include": ["src/**/*.ts", "test/**/*.ts", "scripts/**/*.ts", "*.config.ts", "prisma.config.ts"],
   "exclude": ["node_modules", "dist"]
 }
