@@ -1,15 +1,31 @@
-query Input {
+# $collectionIds comes from the top-level "collectionIds" key of the discount's
+# rule-config metafield (see input_variables in shopify.extension.toml). It is
+# null for rule types without collections, and inAnyCollection is then false.
+query Input($collectionIds: [ID!]) {
   cart {
     lines {
       id
-      cost {
-        subtotalAmount {
-          amount
+      quantity
+      merchandise {
+        __typename
+        ... on ProductVariant {
+          product {
+            inRuleCollection: inAnyCollection(ids: $collectionIds)
+          }
         }
+      }
+    }
+    cost {
+      subtotalAmount {
+        amount
       }
     }
   }
   discount {
     discountClasses
+    ruleConfig: metafield(namespace: "$app:tierdeals", key: "rule-config") {
+      jsonValue
+    }
   }
+  presentmentCurrencyRate
 }

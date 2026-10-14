@@ -1,10 +1,19 @@
 query Input {
   cart {
+    cost {
+      subtotalAmount {
+        amount
+      }
+    }
     deliveryGroups {
       id
     }
   }
   discount {
     discountClasses
+    ruleConfig: metafield(namespace: "$app:tierdeals", key: "rule-config") {
+      jsonValue
+    }
   }
+  presentmentCurrencyRate
 }

@@ -1,4 +1,4 @@
 {
-  "name": "tierdeals-discount",
-  "description": "tierdeals-discount"
+  "name": "TierDeals discount",
+  "description": "Applies TierDeals rules: collection quantity tiers, cart subtotal tiers and free shipping thresholds."
 }

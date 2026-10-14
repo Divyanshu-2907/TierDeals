@@ -10,6 +10,8 @@ description = "t:description"
   [[extensions.targeting]]
   target = "cart.lines.discounts.generate.run"
   input_query = "src/cart_lines_discounts_generate_run.graphql"
+  # Fills $collectionIds from the same metafield the query reads the rule from.
+  input_variables = { namespace = "$app:tierdeals", key = "rule-config" }
   export = "cart_lines_discounts_generate_run"
 
   [[extensions.targeting]]
@@ -20,4 +22,4 @@ description = "t:description"
   [extensions.build]
   command = "cargo build --target=wasm32-unknown-unknown --release"
   path = "target/wasm32-unknown-unknown/release/tierdeals-discount.wasm"
-  watch = [ "src/**/*.rs" ]
+  watch = [ "src/**/*.rs", "src/**/*.graphql" ]

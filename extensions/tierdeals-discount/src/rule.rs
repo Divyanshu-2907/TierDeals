@@ -68,6 +68,17 @@ impl std::error::Error for ConfigError {}
 
 // --- Parsing ------------------------------------------------------------------
 
+/// Parses the discount's config metafield, treating a missing one as an error:
+/// a TierDeals discount without its config has nothing to apply.
+pub fn parse_configured_rule(metafield_value: Option<&JsonValue>) -> Result<Rule, ConfigError> {
+    match metafield_value {
+        Some(value) => parse_rule(value),
+        None => Err(ConfigError::new(
+            "the discount has no $app:tierdeals/rule-config metafield",
+        )),
+    }
+}
+
 /// Parses and validates a rule config.
 ///
 /// Expected shapes (`version` is always 1):
@@ -314,9 +325,10 @@ pub fn to_shop_currency(presentment_amount: f64, presentment_currency_rate: f64)
     }
 }
 
-/// Formats a percentage for a buyer-facing message: `15` or `12.5`, not `15.0`.
-pub fn format_percentage(percentage: f64) -> String {
-    format!("{percentage}")
+/// Formats a percentage or item count for a buyer-facing message: `15` or
+/// `12.5`, not `15.0`.
+pub fn format_number(n: f64) -> String {
+    format!("{n}")
 }
 
 #[cfg(test)]
@@ -693,8 +705,15 @@ mod tests {
     }
 
     #[test]
-    fn formats_percentages_without_trailing_zeros() {
-        assert_eq!(format_percentage(15.0), "15");
-        assert_eq!(format_percentage(12.5), "12.5");
+    fn formats_numbers_without_trailing_zeros() {
+        assert_eq!(format_number(15.0), "15");
+        assert_eq!(format_number(12.5), "12.5");
+    }
+
+    #[test]
+    fn a_missing_metafield_is_a_config_error() {
+        let error = parse_configured_rule(None).unwrap_err();
+
+        assert!(error.to_string().contains("rule-config metafield"));
     }
 }
