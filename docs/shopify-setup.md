@@ -86,7 +86,9 @@ include_config_on_deploy = true
 ```
 
 `shopify app dev` rewrites `application_url` and `redirect_urls` to the tunnel
-URL each run, which is why their placeholder values do not matter.
+URL each run, which is why their placeholder values do not matter. The app
+authenticates with token exchange (see step 8), so it never actually uses a
+redirect URL.
 
 > The scopes must match `SCOPES` in your `.env`. `read_orders` is for the
 > Phase 5 `orders/create` webhook; `write_discounts` is what lets the app
@@ -123,34 +125,26 @@ Open it, pick your development store, and install the app.
 
 ## 8. Verify the install
 
-Shopify installs the app itself from the scopes in `shopify.app.toml`, so our
-own OAuth route has not run yet and no session is stored. Run it once, in a
-normal browser tab, using the tunnel URL printed by `shopify app dev`:
-
-```text
-https://<tunnel>/api/auth?shop=<your-store>.myshopify.com
-```
-
-Approve if asked. Then confirm the offline session was stored:
+The app authenticates with **token exchange**: Shopify installs it from the
+scopes in `shopify.app.toml`, and the first API request from the embedded
+admin UI swaps its App Bridge session token for an offline access token. There
+are no OAuth routes. Open the app in the Shopify admin once, then confirm the
+offline session was stored:
 
 ```bash
 docker exec tierdeals-postgres psql -U tierdeals -d tierdeals -c "select id, shop, scope from shopify_sessions"
 ```
 
-Finally call `/api/me` with a session token minted from the app secret in
-`.env` (PowerShell shown):
+To call the API from a terminal once a session exists, mint a session token
+from the app secret in `.env` (PowerShell shown):
 
 ```powershell
 $token = npx tsx web/backend/scripts/session-token.ts <your-store>.myshopify.com
-Invoke-RestMethod "https://<tunnel>/api/me" -Headers @{ Authorization = "Bearer $token" }
+Invoke-RestMethod "http://localhost:3000/api/me" -Headers @{ Authorization = "Bearer $token" }
 ```
 
-It should return your shop domain and scopes. A 403 means no valid session
-for that shop (run the `/api/auth` step again); a 401 means the token was
+It should return your shop domain and scopes. A 401 means the token was
 rejected, usually because `.env` has a different API key or secret.
-
-Until Phase 3 adds the admin UI, opening the app inside the Shopify admin
-shows a JSON 404. That is expected.
 
 ---
 
@@ -175,6 +169,7 @@ live.
 Check that `embedded = true` in `shopify.app.toml` and that the browser is not
 blocking third-party cookies for `admin.shopify.com`.
 
-**OAuth loops back to the install screen.**
-Usually the scopes in `shopify.app.toml` and `.env` have drifted apart.
-Make them match and reinstall the app.
+**API requests fail with 401 or the app keeps reloading.**
+Usually the scopes in `shopify.app.toml` and `.env` have drifted apart, or
+`.env` holds another app's API key or secret. Make them match and restart
+`shopify app dev`.

@@ -15,10 +15,9 @@ import { shopify } from './lib/shopify.js';
  * Middleware order matters here:
  *   1. request context, so every later log line carries a request id;
  *   2. health checks, which must answer even when Shopify is unreachable;
- *   3. OAuth, which needs the raw query string and must not sit behind auth;
- *   4. the JSON body parser;
- *   5. the API, behind session validation;
- *   6. 404 then the error handler, which are always last.
+ *   3. the JSON body parser;
+ *   4. the API, behind session validation;
+ *   5. 404 then the error handler, which are always last.
  */
 export function createApp(): Express {
   const app = express();
@@ -32,14 +31,6 @@ export function createApp(): Express {
 
   app.use(healthRouter);
 
-  // --- Shopify OAuth ------------------------------------------------------
-  app.get(shopify.config.auth.path, shopify.auth.begin());
-  app.get(
-    shopify.config.auth.callbackPath,
-    shopify.auth.callback(),
-    shopify.redirectToShopifyOrAppRoot(),
-  );
-
   // Webhook processing is mounted in Phase 5, when there are handlers to
   // register. It must stay ahead of express.json(): HMAC verification needs
   // the raw request body.
@@ -47,8 +38,9 @@ export function createApp(): Express {
   app.use(express.json({ limit: '1mb' }));
 
   // --- Application API ----------------------------------------------------
-  // Everything under /api (except auth and webhooks, mounted above) requires a
-  // valid, non-expired session for the calling shop.
+  // Every /api request carries an App Bridge session token; validation
+  // verifies it and, via token exchange, makes sure an offline access token is
+  // stored for the shop.
   const api = express.Router();
   api.get('/me', (req, res) => {
     const session = res.locals.shopify?.session;

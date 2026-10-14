@@ -19,7 +19,15 @@ import { UnauthorizedError } from './errors.js';
 export const ADMIN_API_VERSION = ApiVersion.October26;
 
 /**
- * The configured Shopify app: OAuth, session storage and webhook plumbing.
+ * The configured Shopify app: authentication, session storage and webhook
+ * plumbing.
+ *
+ * Authentication is token exchange. Shopify installs the app itself from the
+ * scopes in shopify.app.toml (managed installation), and the admin UI sends an
+ * App Bridge session token with every API request. The first request from a
+ * shop without a stored session swaps that token for an offline access token,
+ * with no OAuth redirects. The library rejects the auth routes in this mode,
+ * so none are mounted.
  *
  * Sessions live in the same Postgres instance as our own data but in a table
  * the adapter owns (`shopify_sessions`). It creates and migrates that table
@@ -37,6 +45,8 @@ export const shopify: ShopifyApp = shopifyApp({
     hostScheme: 'https',
     apiVersion: ADMIN_API_VERSION,
   },
+  // Still required by the library's config type, but unused under token
+  // exchange: requests to these paths are never routed to it.
   auth: {
     path: '/api/auth',
     callbackPath: '/api/auth/callback',
@@ -46,6 +56,9 @@ export const shopify: ShopifyApp = shopifyApp({
   },
   sessionStorage: new PostgreSQLSessionStorage(new URL(env.DATABASE_URL)),
   useOnlineTokens: false,
+  future: {
+    tokenExchange: true,
+  },
 });
 
 /**
