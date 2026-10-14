@@ -3,8 +3,8 @@
 Tiered discount rules for Shopify. Merchants define discount logic in an
 embedded admin UI; a Rust Shopify Function applies it at checkout.
 
-> **Status:** in development, built in phases. Phases 1 and 2 are complete;
-> Phase 3 (the rules admin) is built and in testing. See [Roadmap](#roadmap).
+> **Status:** in development, built in phases. Phases 1 to 3 are complete;
+> Phase 4 (the Rule Debugger) is built and in testing. See [Roadmap](#roadmap).
 
 ## What it does
 
@@ -22,6 +22,23 @@ that metafield at checkout, so discount logic changes without a redeploy.
 The headline feature is a **Rule Debugger**: build a sample cart, and see for
 every rule whether it matched, which tier applied, how much came off, and a
 plain-English reason why not when it didn't.
+
+## Keeping the debugger honest: shared fixtures
+
+The Rule Debugger predicts what checkout will do, so it is only useful if it
+decides exactly as the Rust Function does. Two implementations of the same
+logic exist on purpose: the Function in Rust (it has to run as WebAssembly at
+checkout), and a TypeScript port (`web/shared/src/evaluator.ts`) that the
+server uses to explain decisions in plain English.
+
+They are held together by [`fixtures/rules`](fixtures/README.md): 30
+language-neutral JSON cases (rule config and cart in, expected decision out)
+covering every rule type, exact thresholds and one unit or cent below, empty
+carts, currency conversion and malformed configs. `cargo test` runs every case
+through the Function’s own parser and evaluator, and Vitest runs the same
+files through the TypeScript port. If either implementation changes how it
+decides, one of the two suites fails, and a new edge case is added once for
+both languages.
 
 ## Architecture
 
@@ -81,7 +98,7 @@ Shopify-side setup (requires a Partner account) is documented in
 
 - [x] **Phase 1** — repo skeleton, Postgres, Express + Prisma, env validation, tooling
 - [x] **Phase 2** — Rust discount Function + `cargo test`
-- [ ] **Phase 3** — Rules admin: CRUD API, Polaris UI, Shopify discount sync
+- [x] **Phase 3** — Rules admin: CRUD API, Polaris UI, Shopify discount sync
 - [ ] **Phase 4** — Rule Debugger, shared fixtures, cross-language parity tests
 - [ ] **Phase 5** — `orders/create` webhook, application log, analytics
 - [ ] **Phase 6** — CI, full README, demo
