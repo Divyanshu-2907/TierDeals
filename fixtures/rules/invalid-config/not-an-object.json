@@ -1,0 +1,18 @@
+{
+  "description": "The metafield holds a string instead of an object.",
+  "config": "COLLECTION_QUANTITY_TIERS",
+  "cart": {
+    "lines": [
+      {
+        "id": "gid://shopify/CartLine/1",
+        "quantity": 10,
+        "inCollection": true
+      }
+    ],
+    "subtotal": 500,
+    "presentmentCurrencyRate": 1
+  },
+  "expected": {
+    "decision": "invalid_config"
+  }
+}

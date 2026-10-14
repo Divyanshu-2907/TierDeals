@@ -1,0 +1,50 @@
+{
+  "description": "Units from the collection add up across lines; lines outside it do not count.",
+  "config": {
+    "version": 1,
+    "type": "COLLECTION_QUANTITY_TIERS",
+    "collectionIds": ["gid://shopify/Collection/1"],
+    "tiers": [
+      {
+        "minQuantity": 2,
+        "percentage": 10
+      },
+      {
+        "minQuantity": 3,
+        "percentage": 15
+      },
+      {
+        "minQuantity": 5,
+        "percentage": 25
+      }
+    ]
+  },
+  "cart": {
+    "lines": [
+      {
+        "id": "gid://shopify/CartLine/1",
+        "quantity": 2,
+        "inCollection": true
+      },
+      {
+        "id": "gid://shopify/CartLine/2",
+        "quantity": 1,
+        "inCollection": true
+      },
+      {
+        "id": "gid://shopify/CartLine/3",
+        "quantity": 4,
+        "inCollection": false
+      }
+    ],
+    "subtotal": 120,
+    "presentmentCurrencyRate": 1
+  },
+  "expected": {
+    "decision": "product_discount",
+    "percentage": 15,
+    "threshold": 3,
+    "qualifyingQuantity": 3,
+    "lineIds": ["gid://shopify/CartLine/1", "gid://shopify/CartLine/2"]
+  }
+}

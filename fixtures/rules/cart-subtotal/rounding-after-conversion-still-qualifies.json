@@ -1,0 +1,34 @@
+{
+  "description": "110 / 1.1 is 99.99999999999999 in floating point; it must still reach 100.",
+  "config": {
+    "version": 1,
+    "type": "CART_SUBTOTAL_TIERS",
+    "tiers": [
+      {
+        "minSubtotal": 50,
+        "percentage": 5
+      },
+      {
+        "minSubtotal": 100,
+        "percentage": 10
+      }
+    ]
+  },
+  "cart": {
+    "lines": [
+      {
+        "id": "gid://shopify/CartLine/1",
+        "quantity": 1,
+        "inCollection": false
+      }
+    ],
+    "subtotal": 110,
+    "presentmentCurrencyRate": 1.1
+  },
+  "expected": {
+    "decision": "order_discount",
+    "percentage": 10,
+    "threshold": 100,
+    "subtotal": 99.99999999999999
+  }
+}

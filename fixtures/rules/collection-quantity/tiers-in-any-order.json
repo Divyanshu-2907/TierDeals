@@ -1,0 +1,40 @@
+{
+  "description": "Tier order in the config does not matter.",
+  "config": {
+    "version": 1,
+    "type": "COLLECTION_QUANTITY_TIERS",
+    "collectionIds": ["gid://shopify/Collection/1"],
+    "tiers": [
+      {
+        "minQuantity": 5,
+        "percentage": 25
+      },
+      {
+        "minQuantity": 2,
+        "percentage": 10
+      },
+      {
+        "minQuantity": 3,
+        "percentage": 15
+      }
+    ]
+  },
+  "cart": {
+    "lines": [
+      {
+        "id": "gid://shopify/CartLine/1",
+        "quantity": 4,
+        "inCollection": true
+      }
+    ],
+    "subtotal": 80,
+    "presentmentCurrencyRate": 1
+  },
+  "expected": {
+    "decision": "product_discount",
+    "percentage": 15,
+    "threshold": 3,
+    "qualifyingQuantity": 4,
+    "lineIds": ["gid://shopify/CartLine/1"]
+  }
+}

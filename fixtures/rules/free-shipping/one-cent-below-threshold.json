@@ -1,0 +1,18 @@
+{
+  "description": "One cent under the threshold.",
+  "config": {
+    "version": 1,
+    "type": "FREE_SHIPPING_THRESHOLD",
+    "minSubtotal": 75
+  },
+  "cart": {
+    "lines": [],
+    "subtotal": 74.99,
+    "presentmentCurrencyRate": 1
+  },
+  "expected": {
+    "decision": "not_applied",
+    "reason": "below_threshold",
+    "measured": 74.99
+  }
+}

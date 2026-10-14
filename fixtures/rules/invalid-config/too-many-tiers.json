@@ -1,0 +1,67 @@
+{
+  "description": "More than 10 tiers.",
+  "config": {
+    "version": 1,
+    "type": "CART_SUBTOTAL_TIERS",
+    "tiers": [
+      {
+        "minSubtotal": 10,
+        "percentage": 1
+      },
+      {
+        "minSubtotal": 20,
+        "percentage": 2
+      },
+      {
+        "minSubtotal": 30,
+        "percentage": 3
+      },
+      {
+        "minSubtotal": 40,
+        "percentage": 4
+      },
+      {
+        "minSubtotal": 50,
+        "percentage": 5
+      },
+      {
+        "minSubtotal": 60,
+        "percentage": 6
+      },
+      {
+        "minSubtotal": 70,
+        "percentage": 7
+      },
+      {
+        "minSubtotal": 80,
+        "percentage": 8
+      },
+      {
+        "minSubtotal": 90,
+        "percentage": 9
+      },
+      {
+        "minSubtotal": 100,
+        "percentage": 10
+      },
+      {
+        "minSubtotal": 110,
+        "percentage": 11
+      }
+    ]
+  },
+  "cart": {
+    "lines": [
+      {
+        "id": "gid://shopify/CartLine/1",
+        "quantity": 1,
+        "inCollection": false
+      }
+    ],
+    "subtotal": 500,
+    "presentmentCurrencyRate": 1
+  },
+  "expected": {
+    "decision": "invalid_config"
+  }
+}

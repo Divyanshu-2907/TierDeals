@@ -1,0 +1,16 @@
+{
+  "description": "A negative free shipping threshold.",
+  "config": {
+    "version": 1,
+    "type": "FREE_SHIPPING_THRESHOLD",
+    "minSubtotal": -5
+  },
+  "cart": {
+    "lines": [],
+    "subtotal": 500,
+    "presentmentCurrencyRate": 1
+  },
+  "expected": {
+    "decision": "invalid_config"
+  }
+}

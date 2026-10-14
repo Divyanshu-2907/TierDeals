@@ -1,0 +1,33 @@
+{
+  "description": "Keys a newer admin might add are ignored.",
+  "config": {
+    "version": 1,
+    "type": "COLLECTION_QUANTITY_TIERS",
+    "collectionIds": ["gid://shopify/Collection/1"],
+    "tiers": [
+      {
+        "minQuantity": 2,
+        "percentage": 10
+      }
+    ],
+    "note": "added by a future version"
+  },
+  "cart": {
+    "lines": [
+      {
+        "id": "gid://shopify/CartLine/1",
+        "quantity": 2,
+        "inCollection": true
+      }
+    ],
+    "subtotal": 40,
+    "presentmentCurrencyRate": 1
+  },
+  "expected": {
+    "decision": "product_discount",
+    "percentage": 10,
+    "threshold": 2,
+    "qualifyingQuantity": 2,
+    "lineIds": ["gid://shopify/CartLine/1"]
+  }
+}

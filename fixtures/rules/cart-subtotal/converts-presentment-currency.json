@@ -1,0 +1,34 @@
+{
+  "description": "A buyer paying in another currency: 75.00 at a rate of 1.5 is 50.00 in the shop currency.",
+  "config": {
+    "version": 1,
+    "type": "CART_SUBTOTAL_TIERS",
+    "tiers": [
+      {
+        "minSubtotal": 50,
+        "percentage": 5
+      },
+      {
+        "minSubtotal": 100,
+        "percentage": 10
+      }
+    ]
+  },
+  "cart": {
+    "lines": [
+      {
+        "id": "gid://shopify/CartLine/1",
+        "quantity": 1,
+        "inCollection": false
+      }
+    ],
+    "subtotal": 75,
+    "presentmentCurrencyRate": 1.5
+  },
+  "expected": {
+    "decision": "order_discount",
+    "percentage": 5,
+    "threshold": 50,
+    "subtotal": 50
+  }
+}

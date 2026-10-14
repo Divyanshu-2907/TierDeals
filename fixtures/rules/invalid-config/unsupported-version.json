@@ -1,0 +1,31 @@
+{
+  "description": "A config written by a future, incompatible version.",
+  "config": {
+    "version": 2,
+    "type": "CART_SUBTOTAL_TIERS",
+    "tiers": [
+      {
+        "minSubtotal": 50,
+        "percentage": 5
+      },
+      {
+        "minSubtotal": 100,
+        "percentage": 10
+      }
+    ]
+  },
+  "cart": {
+    "lines": [
+      {
+        "id": "gid://shopify/CartLine/1",
+        "quantity": 1,
+        "inCollection": false
+      }
+    ],
+    "subtotal": 500,
+    "presentmentCurrencyRate": 1
+  },
+  "expected": {
+    "decision": "invalid_config"
+  }
+}

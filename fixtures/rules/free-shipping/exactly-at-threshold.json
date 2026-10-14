@@ -1,0 +1,17 @@
+{
+  "description": "A subtotal exactly at the threshold ships free.",
+  "config": {
+    "version": 1,
+    "type": "FREE_SHIPPING_THRESHOLD",
+    "minSubtotal": 75
+  },
+  "cart": {
+    "lines": [],
+    "subtotal": 75,
+    "presentmentCurrencyRate": 1
+  },
+  "expected": {
+    "decision": "free_shipping",
+    "subtotal": 75
+  }
+}

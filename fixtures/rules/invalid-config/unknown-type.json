@@ -1,0 +1,22 @@
+{
+  "description": "A rule type this Function does not know.",
+  "config": {
+    "version": 1,
+    "type": "BUY_X_GET_Y",
+    "tiers": []
+  },
+  "cart": {
+    "lines": [
+      {
+        "id": "gid://shopify/CartLine/1",
+        "quantity": 10,
+        "inCollection": true
+      }
+    ],
+    "subtotal": 500,
+    "presentmentCurrencyRate": 1
+  },
+  "expected": {
+    "decision": "invalid_config"
+  }
+}

@@ -5,6 +5,9 @@ pub mod cart_delivery_options_discounts_generate_run;
 pub mod cart_lines_discounts_generate_run;
 pub mod rule;
 
+#[cfg(test)]
+mod parity_tests;
+
 #[typegen("schema.graphql")]
 pub mod schema {
     #[query("src/cart_lines_discounts_generate_run.graphql")]

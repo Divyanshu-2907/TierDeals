@@ -1,0 +1,36 @@
+{
+  "description": "A config the admin would reject (higher tier, smaller discount) still gives the buyer the best tier they reach.",
+  "config": {
+    "version": 1,
+    "type": "COLLECTION_QUANTITY_TIERS",
+    "collectionIds": ["gid://shopify/Collection/1"],
+    "tiers": [
+      {
+        "minQuantity": 2,
+        "percentage": 20
+      },
+      {
+        "minQuantity": 5,
+        "percentage": 10
+      }
+    ]
+  },
+  "cart": {
+    "lines": [
+      {
+        "id": "gid://shopify/CartLine/1",
+        "quantity": 6,
+        "inCollection": true
+      }
+    ],
+    "subtotal": 120,
+    "presentmentCurrencyRate": 1
+  },
+  "expected": {
+    "decision": "product_discount",
+    "percentage": 20,
+    "threshold": 2,
+    "qualifyingQuantity": 6,
+    "lineIds": ["gid://shopify/CartLine/1"]
+  }
+}

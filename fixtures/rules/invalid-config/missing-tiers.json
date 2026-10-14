@@ -1,0 +1,21 @@
+{
+  "description": "A tiered rule with no tiers key.",
+  "config": {
+    "version": 1,
+    "type": "CART_SUBTOTAL_TIERS"
+  },
+  "cart": {
+    "lines": [
+      {
+        "id": "gid://shopify/CartLine/1",
+        "quantity": 1,
+        "inCollection": false
+      }
+    ],
+    "subtotal": 500,
+    "presentmentCurrencyRate": 1
+  },
+  "expected": {
+    "decision": "invalid_config"
+  }
+}

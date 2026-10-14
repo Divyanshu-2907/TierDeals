@@ -1,0 +1,43 @@
+{
+  "description": "One unit short of the lowest tier, however many other items are in the cart.",
+  "config": {
+    "version": 1,
+    "type": "COLLECTION_QUANTITY_TIERS",
+    "collectionIds": ["gid://shopify/Collection/1"],
+    "tiers": [
+      {
+        "minQuantity": 2,
+        "percentage": 10
+      },
+      {
+        "minQuantity": 3,
+        "percentage": 15
+      },
+      {
+        "minQuantity": 5,
+        "percentage": 25
+      }
+    ]
+  },
+  "cart": {
+    "lines": [
+      {
+        "id": "gid://shopify/CartLine/1",
+        "quantity": 1,
+        "inCollection": true
+      },
+      {
+        "id": "gid://shopify/CartLine/2",
+        "quantity": 9,
+        "inCollection": false
+      }
+    ],
+    "subtotal": 200,
+    "presentmentCurrencyRate": 1
+  },
+  "expected": {
+    "decision": "not_applied",
+    "reason": "below_threshold",
+    "measured": 1
+  }
+}

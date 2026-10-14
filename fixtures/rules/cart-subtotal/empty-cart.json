@@ -1,0 +1,27 @@
+{
+  "description": "An empty cart has a zero subtotal.",
+  "config": {
+    "version": 1,
+    "type": "CART_SUBTOTAL_TIERS",
+    "tiers": [
+      {
+        "minSubtotal": 50,
+        "percentage": 5
+      },
+      {
+        "minSubtotal": 100,
+        "percentage": 10
+      }
+    ]
+  },
+  "cart": {
+    "lines": [],
+    "subtotal": 0,
+    "presentmentCurrencyRate": 1
+  },
+  "expected": {
+    "decision": "not_applied",
+    "reason": "below_threshold",
+    "measured": 0
+  }
+}

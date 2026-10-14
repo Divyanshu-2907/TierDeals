@@ -1,0 +1,17 @@
+{
+  "description": "A threshold of 0 makes shipping free for every cart.",
+  "config": {
+    "version": 1,
+    "type": "FREE_SHIPPING_THRESHOLD",
+    "minSubtotal": 0
+  },
+  "cart": {
+    "lines": [],
+    "subtotal": 0,
+    "presentmentCurrencyRate": 1
+  },
+  "expected": {
+    "decision": "free_shipping",
+    "subtotal": 0
+  }
+}

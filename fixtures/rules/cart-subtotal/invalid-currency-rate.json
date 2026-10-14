@@ -1,0 +1,32 @@
+{
+  "description": "A rate of 0 cannot be used, so nothing applies.",
+  "config": {
+    "version": 1,
+    "type": "CART_SUBTOTAL_TIERS",
+    "tiers": [
+      {
+        "minSubtotal": 50,
+        "percentage": 5
+      },
+      {
+        "minSubtotal": 100,
+        "percentage": 10
+      }
+    ]
+  },
+  "cart": {
+    "lines": [
+      {
+        "id": "gid://shopify/CartLine/1",
+        "quantity": 1,
+        "inCollection": false
+      }
+    ],
+    "subtotal": 500,
+    "presentmentCurrencyRate": 0
+  },
+  "expected": {
+    "decision": "not_applied",
+    "reason": "invalid_currency_rate"
+  }
+}

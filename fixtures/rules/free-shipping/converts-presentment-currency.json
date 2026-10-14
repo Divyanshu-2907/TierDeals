@@ -1,0 +1,18 @@
+{
+  "description": "100.00 at a rate of 1.5 is 66.67 in the shop currency, short of 75.",
+  "config": {
+    "version": 1,
+    "type": "FREE_SHIPPING_THRESHOLD",
+    "minSubtotal": 75
+  },
+  "cart": {
+    "lines": [],
+    "subtotal": 100,
+    "presentmentCurrencyRate": 1.5
+  },
+  "expected": {
+    "decision": "not_applied",
+    "reason": "below_threshold",
+    "measured": 66.66666666666667
+  }
+}

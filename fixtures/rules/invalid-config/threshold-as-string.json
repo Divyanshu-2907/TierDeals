@@ -1,0 +1,16 @@
+{
+  "description": "A number sent as a string, as a hand-edited metafield might.",
+  "config": {
+    "version": 1,
+    "type": "FREE_SHIPPING_THRESHOLD",
+    "minSubtotal": "75"
+  },
+  "cart": {
+    "lines": [],
+    "subtotal": 500,
+    "presentmentCurrencyRate": 1
+  },
+  "expected": {
+    "decision": "invalid_config"
+  }
+}
