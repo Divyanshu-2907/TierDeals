@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  typescript:
+    name: TypeScript — format, lint, typecheck, tests, build
+    runs-on: ubuntu-latest
+
+    # The API tests run against a real Postgres database.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: tierdeals
+          POSTGRES_PASSWORD: tierdeals
+          POSTGRES_DB: tierdeals
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tierdeals -d tierdeals"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # The test setup migrates (and creates) this database before the run.
+      TEST_DATABASE_URL: postgresql://tierdeals:tierdeals@localhost:5432/tierdeals_test
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  function:
+    name: Rust Function — fmt, clippy, tests (incl. shared fixtures), wasm build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: extensions/tierdeals-discount
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: clippy, rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: extensions/tierdeals-discount
+
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets --locked -- -D warnings
+      # Includes src/parity_tests.rs, which runs every case in /fixtures/rules.
+      - run: cargo test --locked
+      - run: cargo build --release --locked --target wasm32-unknown-unknown
+
+      - name: Check Shopify's 256 kB Function size limit
+        run: |
+          size=$(stat -c %s target/wasm32-unknown-unknown/release/tierdeals-discount.wasm)
+          echo "Function size: $size bytes"
+          test "$size" -lt 262144
