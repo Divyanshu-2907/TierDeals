@@ -1,11 +1,11 @@
 //! `cart.delivery-options.discounts.generate.run`: shipping discounts.
 //!
 //! A free shipping threshold that the cart meets makes every delivery group
-//! free. Anything else, or a config that does not parse, produces no
-//! operations.
+//! free. The decision itself is `rule::evaluate`'s. Anything else, or a
+//! config that does not parse, produces no operations.
 
 use super::schema;
-use crate::rule::{self, Rule};
+use crate::rule::{self, CartFacts, Decision, NotApplied, Rule};
 use shopify_function::prelude::*;
 use shopify_function::Result;
 
@@ -34,36 +34,34 @@ fn operations(input: &Input) -> Vec<schema::DeliveryOperation> {
         }
     };
 
-    let operation = match rule {
-        Rule::FreeShippingThreshold { min_subtotal }
-            if input
-                .discount()
-                .discount_classes()
-                .contains(&schema::DiscountClass::Shipping) =>
-        {
-            free_shipping(input, min_subtotal)
-        }
-        // A product or order rule: those are handled by the cart lines target.
-        _ => None,
-    };
-
-    operation.into_iter().collect()
-}
-
-fn free_shipping(input: &Input, min_subtotal: f64) -> Option<schema::DeliveryOperation> {
-    let presentment_subtotal = input.cart().cost().subtotal_amount().amount().as_f64();
-    let Some(subtotal) = rule::to_shop_currency(
-        presentment_subtotal,
-        input.presentment_currency_rate().as_f64(),
-    ) else {
-        log!("TierDeals: not applying discount: unusable presentment currency rate");
-        return None;
-    };
-
-    if !rule::qualifies_for_free_shipping(min_subtotal, subtotal) {
-        return None;
+    // Product and order rules belong to the cart lines target.
+    if !matches!(rule, Rule::FreeShippingThreshold { .. })
+        || !input
+            .discount()
+            .discount_classes()
+            .contains(&schema::DiscountClass::Shipping)
+    {
+        return vec![];
     }
 
+    let facts = CartFacts {
+        // The free shipping rule only looks at the subtotal.
+        lines: vec![],
+        subtotal: input.cart().cost().subtotal_amount().amount().as_f64(),
+        presentment_currency_rate: input.presentment_currency_rate().as_f64(),
+    };
+
+    match rule::evaluate(&rule, &facts) {
+        Decision::FreeShipping { .. } => free_shipping_operation(input).into_iter().collect(),
+        Decision::NotApplied(NotApplied::InvalidCurrencyRate) => {
+            log!("TierDeals: not applying discount: unusable presentment currency rate");
+            vec![]
+        }
+        _ => vec![],
+    }
+}
+
+fn free_shipping_operation(input: &Input) -> Option<schema::DeliveryOperation> {
     let targets: Vec<_> = input
         .cart()
         .delivery_groups()

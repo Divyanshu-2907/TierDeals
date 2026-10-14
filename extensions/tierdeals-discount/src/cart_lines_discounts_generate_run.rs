@@ -1,11 +1,13 @@
 //! `cart.lines.discounts.generate.run`: product and order discounts.
 //!
 //! Collection quantity tiers become a product discount on the qualifying
-//! lines; cart subtotal tiers become an order discount. Anything else, or a
-//! config that does not parse, produces no operations.
+//! lines; cart subtotal tiers become an order discount. The decision itself
+//! is `rule::evaluate`'s; this module only reads the cart and writes
+//! operations. Anything else, or a config that does not parse, produces no
+//! operations.
 
 use super::schema;
-use crate::rule::{self, LineFacts, Rule, Tier};
+use crate::rule::{self, CartFacts, Decision, LineDiscount, LineFacts, NotApplied, Rule, Tier};
 use shopify_function::prelude::*;
 use shopify_function::Result;
 
@@ -35,103 +37,98 @@ fn operations(input: &Input) -> Vec<schema::CartOperation> {
         }
     };
 
-    let classes = input.discount().discount_classes();
-
-    let operation = match rule {
-        Rule::CollectionQuantityTiers { tiers, .. }
-            if classes.contains(&schema::DiscountClass::Product) =>
-        {
-            product_discount(input, &tiers)
-        }
-        Rule::CartSubtotalTiers { tiers } if classes.contains(&schema::DiscountClass::Order) => {
-            order_discount(input, &tiers)
-        }
-        // A shipping rule, or a rule whose class the discount was not created with.
-        _ => None,
+    // Only act within the discount class the rule type needs; shipping rules
+    // belong to the delivery target.
+    let needed_class = match rule {
+        Rule::CollectionQuantityTiers { .. } => schema::DiscountClass::Product,
+        Rule::CartSubtotalTiers { .. } => schema::DiscountClass::Order,
+        Rule::FreeShippingThreshold { .. } => return vec![],
     };
+    if !input.discount().discount_classes().contains(&needed_class) {
+        return vec![];
+    }
 
-    operation.into_iter().collect()
+    match rule::evaluate(&rule, &cart_facts(input)) {
+        Decision::ProductDiscount(discount) => vec![product_operation(discount)],
+        Decision::OrderDiscount { tier, .. } => vec![order_operation(tier)],
+        Decision::NotApplied(NotApplied::InvalidCurrencyRate) => {
+            log!("TierDeals: not applying discount: unusable presentment currency rate");
+            vec![]
+        }
+        Decision::NotApplied(NotApplied::BelowThreshold { .. }) | Decision::FreeShipping { .. } => {
+            vec![]
+        }
+    }
 }
 
-fn product_discount(input: &Input, tiers: &[Tier]) -> Option<schema::CartOperation> {
-    let lines: Vec<LineFacts> = input
-        .cart()
-        .lines()
-        .iter()
-        .map(|line| LineFacts {
-            id: line.id().clone(),
-            quantity: i64::from(*line.quantity()),
-            in_collection: match line.merchandise() {
-                Merchandise::ProductVariant(variant) => *variant.product().in_rule_collection(),
-                _ => false,
-            },
-        })
-        .collect();
+fn cart_facts(input: &Input) -> CartFacts {
+    CartFacts {
+        lines: input
+            .cart()
+            .lines()
+            .iter()
+            .map(|line| LineFacts {
+                id: line.id().clone(),
+                quantity: i64::from(*line.quantity()),
+                in_collection: match line.merchandise() {
+                    Merchandise::ProductVariant(variant) => *variant.product().in_rule_collection(),
+                    _ => false,
+                },
+            })
+            .collect(),
+        subtotal: input.cart().cost().subtotal_amount().amount().as_f64(),
+        presentment_currency_rate: input.presentment_currency_rate().as_f64(),
+    }
+}
 
-    let discount = rule::evaluate_collection_quantity(tiers, &lines)?;
-
-    Some(schema::CartOperation::ProductDiscountsAdd(
-        schema::ProductDiscountsAddOperation {
-            selection_strategy: schema::ProductDiscountSelectionStrategy::First,
-            candidates: vec![schema::ProductDiscountCandidate {
-                targets: discount
-                    .line_ids
-                    .into_iter()
-                    .map(|id| {
-                        schema::ProductDiscountCandidateTarget::CartLine(schema::CartLineTarget {
-                            id,
-                            quantity: None,
-                        })
+fn product_operation(discount: LineDiscount) -> schema::CartOperation {
+    schema::CartOperation::ProductDiscountsAdd(schema::ProductDiscountsAddOperation {
+        selection_strategy: schema::ProductDiscountSelectionStrategy::First,
+        candidates: vec![schema::ProductDiscountCandidate {
+            targets: discount
+                .line_ids
+                .into_iter()
+                .map(|id| {
+                    schema::ProductDiscountCandidateTarget::CartLine(schema::CartLineTarget {
+                        id,
+                        quantity: None,
                     })
-                    .collect(),
-                message: Some(format!(
-                    "Buy {}+, save {}%",
-                    rule::format_number(discount.tier.threshold),
-                    rule::format_number(discount.tier.percentage)
-                )),
-                value: schema::ProductDiscountCandidateValue::Percentage(schema::Percentage {
-                    value: Decimal(discount.tier.percentage),
-                }),
-                associated_discount_code: None,
-                prerequisites: None,
-            }],
-        },
-    ))
+                })
+                .collect(),
+            message: Some(format!(
+                "Buy {}+, save {}%",
+                rule::format_number(discount.tier.threshold),
+                rule::format_number(discount.tier.percentage)
+            )),
+            value: schema::ProductDiscountCandidateValue::Percentage(schema::Percentage {
+                value: Decimal(discount.tier.percentage),
+            }),
+            associated_discount_code: None,
+            prerequisites: None,
+        }],
+    })
 }
 
-fn order_discount(input: &Input, tiers: &[Tier]) -> Option<schema::CartOperation> {
-    let presentment_subtotal = input.cart().cost().subtotal_amount().amount().as_f64();
-    let Some(subtotal) = rule::to_shop_currency(
-        presentment_subtotal,
-        input.presentment_currency_rate().as_f64(),
-    ) else {
-        log!("TierDeals: not applying discount: unusable presentment currency rate");
-        return None;
-    };
-
-    let tier = rule::evaluate_cart_subtotal(tiers, subtotal)?;
-
-    Some(schema::CartOperation::OrderDiscountsAdd(
-        schema::OrderDiscountsAddOperation {
-            selection_strategy: schema::OrderDiscountSelectionStrategy::First,
-            candidates: vec![schema::OrderDiscountCandidate {
-                targets: vec![schema::OrderDiscountCandidateTarget::OrderSubtotal(
-                    schema::OrderSubtotalTarget {
-                        excluded_cart_line_ids: vec![],
-                    },
-                )],
-                message: Some(format!(
-                    "{}% off your order",
-                    rule::format_number(tier.percentage)
-                )),
-                value: schema::OrderDiscountCandidateValue::Percentage(schema::Percentage {
-                    value: Decimal(tier.percentage),
-                }),
-                conditions: None,
-                associated_discount_code: None,
-            }],
-        },
-    ))
+fn order_operation(tier: Tier) -> schema::CartOperation {
+    schema::CartOperation::OrderDiscountsAdd(schema::OrderDiscountsAddOperation {
+        selection_strategy: schema::OrderDiscountSelectionStrategy::First,
+        candidates: vec![schema::OrderDiscountCandidate {
+            targets: vec![schema::OrderDiscountCandidateTarget::OrderSubtotal(
+                schema::OrderSubtotalTarget {
+                    excluded_cart_line_ids: vec![],
+                },
+            )],
+            message: Some(format!(
+                "{}% off your order",
+                rule::format_number(tier.percentage)
+            )),
+            value: schema::OrderDiscountCandidateValue::Percentage(schema::Percentage {
+                value: Decimal(tier.percentage),
+            }),
+            conditions: None,
+            associated_discount_code: None,
+        }],
+    })
 }
 
 #[cfg(test)]

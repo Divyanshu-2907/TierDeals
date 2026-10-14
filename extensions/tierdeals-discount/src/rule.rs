@@ -287,18 +287,17 @@ pub struct LineDiscount {
 /// Collection quantity tiers: counts every unit from the rule's collections
 /// across all lines and, if a tier is met, discounts those lines.
 pub fn evaluate_collection_quantity(tiers: &[Tier], lines: &[LineFacts]) -> Option<LineDiscount> {
-    let qualifying: Vec<&LineFacts> = lines
-        .iter()
-        .filter(|line| line.in_collection && line.quantity > 0)
-        .collect();
-    let qualifying_quantity: i64 = qualifying.iter().map(|line| line.quantity).sum();
-
+    let qualifying_quantity = qualifying_quantity(lines);
     let tier = best_tier(tiers, qualifying_quantity as f64)?;
 
     Some(LineDiscount {
         tier,
         qualifying_quantity,
-        line_ids: qualifying.iter().map(|line| line.id.clone()).collect(),
+        line_ids: lines
+            .iter()
+            .filter(|line| line.in_collection && line.quantity > 0)
+            .map(|line| line.id.clone())
+            .collect(),
     })
 }
 
@@ -323,6 +322,88 @@ pub fn to_shop_currency(presentment_amount: f64, presentment_currency_rate: f64)
     } else {
         None
     }
+}
+
+/// Everything about a cart that rule evaluation looks at.
+#[derive(Debug, Clone, PartialEq)]
+pub struct CartFacts {
+    /// Empty where the target does not query lines (delivery).
+    pub lines: Vec<LineFacts>,
+    /// Cart subtotal in the buyer's (presentment) currency.
+    pub subtotal: f64,
+    /// Presentment currency units per unit of shop currency.
+    pub presentment_currency_rate: f64,
+}
+
+/// What a rule does to a cart. This is the contract shared with the
+/// TypeScript evaluator behind the admin's Rule Debugger: both run the
+/// fixtures in /fixtures and must reach the same decision.
+#[derive(Debug, Clone, PartialEq)]
+pub enum Decision {
+    /// A percentage off the qualifying lines.
+    ProductDiscount(LineDiscount),
+    /// A percentage off the order. `subtotal` is in the shop's currency.
+    OrderDiscount {
+        tier: Tier,
+        subtotal: f64,
+    },
+    /// Free shipping. `subtotal` is in the shop's currency.
+    FreeShipping {
+        subtotal: f64,
+    },
+    NotApplied(NotApplied),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum NotApplied {
+    /// No tier reached. `measured` is the qualifying item count, or the
+    /// subtotal in the shop's currency.
+    BelowThreshold { measured: f64 },
+    /// The presentment currency rate cannot be used to convert the subtotal.
+    InvalidCurrencyRate,
+}
+
+/// Evaluates a rule against a cart. Pure: same input, same decision.
+pub fn evaluate(rule: &Rule, cart: &CartFacts) -> Decision {
+    match rule {
+        Rule::CollectionQuantityTiers { tiers, .. } => {
+            match evaluate_collection_quantity(tiers, &cart.lines) {
+                Some(discount) => Decision::ProductDiscount(discount),
+                None => Decision::NotApplied(NotApplied::BelowThreshold {
+                    measured: qualifying_quantity(&cart.lines) as f64,
+                }),
+            }
+        }
+        Rule::CartSubtotalTiers { tiers } => {
+            let Some(subtotal) = to_shop_currency(cart.subtotal, cart.presentment_currency_rate)
+            else {
+                return Decision::NotApplied(NotApplied::InvalidCurrencyRate);
+            };
+            match evaluate_cart_subtotal(tiers, subtotal) {
+                Some(tier) => Decision::OrderDiscount { tier, subtotal },
+                None => Decision::NotApplied(NotApplied::BelowThreshold { measured: subtotal }),
+            }
+        }
+        Rule::FreeShippingThreshold { min_subtotal } => {
+            let Some(subtotal) = to_shop_currency(cart.subtotal, cart.presentment_currency_rate)
+            else {
+                return Decision::NotApplied(NotApplied::InvalidCurrencyRate);
+            };
+            if qualifies_for_free_shipping(*min_subtotal, subtotal) {
+                Decision::FreeShipping { subtotal }
+            } else {
+                Decision::NotApplied(NotApplied::BelowThreshold { measured: subtotal })
+            }
+        }
+    }
+}
+
+fn qualifying_quantity(lines: &[LineFacts]) -> i64 {
+    lines
+        .iter()
+        .filter(|line| line.in_collection && line.quantity > 0)
+        .map(|line| line.quantity)
+        .sum()
 }
 
 /// Formats a percentage or item count for a buyer-facing message: `15` or
