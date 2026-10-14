@@ -14,4 +14,7 @@ webhooks_path = "/api/webhooks"
 port = 3000
 
 [commands]
+# The CLI gives this process an open, non-TTY stdin. `tsx watch` stalls on that
+# (at least on Windows) and never starts the server, so the backend's dev
+# script uses Node's own --watch with tsx as a loader instead.
 dev = "npm run dev"
