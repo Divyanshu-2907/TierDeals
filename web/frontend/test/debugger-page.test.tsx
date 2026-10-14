@@ -218,4 +218,45 @@ describe('DebuggerPage', () => {
       document.querySelector('s-text-area[label="Bug report JSON"]')?.getAttribute('value'),
     ).toContain('"kind": "tierdeals-bug-report"');
   });
+
+  it('downloads the report as a .json file from the fallback dialog', async () => {
+    vi.stubGlobal('navigator', {
+      clipboard: { writeText: () => Promise.reject(new Error('blocked')) },
+    });
+    // jsdom implements neither object URLs nor navigation, so capture both.
+    let blob: Blob | undefined;
+    URL.createObjectURL = vi.fn((b: Blob) => {
+      blob = b;
+      return 'blob:report';
+    });
+    URL.revokeObjectURL = vi.fn();
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(function (this: HTMLAnchorElement) {});
+
+    renderPage();
+    stubModals();
+    await pasteJson(
+      JSON.stringify({
+        lines: [{ productId: LIQUID, quantity: 2, unitPrice: 749.95, collectionIds: [HYDROGEN] }],
+      }),
+    );
+    click(buttonNamed('Evaluate'));
+    await screen.findByText('Not applied: 2 items from Hydrogen, needs 3.');
+    click(buttonNamed('Copy as bug report'));
+    await waitFor(() =>
+      expect(
+        document.querySelector('s-text-area[label="Bug report JSON"]')?.getAttribute('value'),
+      ).toContain('tierdeals-bug-report'),
+    );
+
+    click(buttonNamed('Download as .json'));
+
+    expect(clickSpy).toHaveBeenCalledOnce();
+    const link = clickSpy.mock.contexts[0] as HTMLAnchorElement;
+    expect(link.download).toBe('tierdeals-bug-report-tierdeals-dev-2026-10-14T12-00-00.json');
+    expect(link.href).toBe('blob:report');
+    expect(blob?.type).toBe('application/json');
+    expect(JSON.parse(await blob!.text())).toMatchObject({ kind: 'tierdeals-bug-report' });
+  });
 });

@@ -13,6 +13,7 @@ import {
   type CartFormValues,
   type CartLineRow,
 } from '../debugger/debug-cart';
+import { downloadTextFile } from '../ui/download';
 import { fieldValue } from '../ui/events';
 import { fieldError } from '../ui/field-error';
 import { hideModal, showModal } from '../ui/modal';
@@ -20,6 +21,13 @@ import { showError } from '../ui/toast';
 
 const PASTE_MODAL_ID = 'paste-cart-modal';
 const REPORT_MODAL_ID = 'bug-report-modal';
+
+/** e.g. tierdeals-bug-report-tierdeals-dev-2026-10-14T12-00-00.json */
+function bugReportFilename(result: DebugResult | null): string {
+  const shop = result?.shop.replace(/\.myshopify\.com$/, '') ?? 'shop';
+  const at = (result?.evaluatedAt ?? new Date().toISOString()).slice(0, 19).replace(/:/g, '-');
+  return `tierdeals-bug-report-${shop}-${at}.json`;
+}
 
 /**
  * Rule Debugger: build or paste a sample cart and see, for every rule,
@@ -251,10 +259,19 @@ export function DebuggerPage() {
       <s-modal id={REPORT_MODAL_ID} heading="Bug report" size="large">
         <s-stack gap="base">
           <s-paragraph>
-            The clipboard is not available here. Select the text and copy it.
+            The clipboard is not available here. Download the report, or select the text and copy
+            it.
           </s-paragraph>
           <s-text-area label="Bug report JSON" rows={16} readOnly value={reportText} />
         </s-stack>
+        <s-button
+          slot="primary-action"
+          variant="primary"
+          icon="download"
+          onClick={() => downloadTextFile(bugReportFilename(result), reportText)}
+        >
+          Download as .json
+        </s-button>
         <s-button slot="secondary-actions" commandFor={REPORT_MODAL_ID} command="--hide">
           Close
         </s-button>
