@@ -25,11 +25,38 @@ Debugger explains why a discount did or did not apply.
 
 ## Screenshots
 
-| | |
-| --- | --- |
-| ![Rules list](docs/screenshots/rules-list.png) Rules list with status, Shopify sync state and on/off switches | ![Rule form with validation errors](docs/screenshots/rule-form-validation.png) Create form showing inline validation errors |
-| ![Checkout with a product discount](docs/screenshots/checkout-product-discount.png) Checkout: “Buy 3+, save 20%” on the Hydrogen boards | ![Checkout with an order discount](docs/screenshots/checkout-order-discount.png) Checkout: a subtotal tier as an order discount |
-| ![Rule Debugger result](docs/screenshots/debugger-result.png) Rule Debugger explaining every rule for a cart | ![Bug report dialog](docs/screenshots/bug-report-dialog.png) Bug report export, with Download as .json |
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/rules-list.png" alt="TierDeals rules list in the Shopify admin: two rules, both Active and In sync, with on/off switches">
+      <br><sub>Rules list: status, Shopify sync state and on/off switches.</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/rule-form-validation.png" alt="Create rule form showing inline errors: Enter a title, and a higher tier must give a bigger discount">
+      <br><sub>Create form: validation errors shown next to each field.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/checkout-product-discount.png" alt="Shopify checkout with Buy 3+, save 20% on each Hydrogen collection snowboard, total savings ₹474.99">
+      <br><sub>Checkout: “Buy 3+, save 20%” on the Hydrogen boards (−₹474.99).</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/checkout-order-discount.png" alt="Shopify checkout with a 5% off your order discount of ₹66.49 on a ₹1,329.90 cart">
+      <br><sub>Checkout: a subtotal tier applied as “5% off your order”.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/debugger-result.png" alt="Rule Debugger results: both rules applied, a plain-English reason for each, and a note that they do not combine">
+      <br><sub>Rule Debugger: each rule's decision, amount and reason.</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/bug-report-dialog.png" alt="Bug report dialog showing the report JSON and a Download as .json button">
+      <br><sub>Bug report export, with Download as .json.</sub>
+    </td>
+  </tr>
+</table>
 
 ## How it works
 
